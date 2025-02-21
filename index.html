@@ -1,0 +1,35 @@
+import requests, random, ipywidgets as widgets
+from IPython.display import display, Image, clear_output
+
+country_mapping = requests.get("https://flagcdn.com/en/codes.json").json()
+score, attempts = 0, 0
+
+def flag_quiz():
+    global current_country, score, attempts
+    clear_output()
+    
+    current_country = random.choice(list(country_mapping.keys()))
+    correct_country = country_mapping[current_country]
+    flag_url = f"https://flagcdn.com/w320/{current_country}.png"
+    
+    options = random.sample([c for c in country_mapping.values() if c != correct_country], 3) + [correct_country]
+    random.shuffle(options)
+
+    display(Image(flag_url))
+    
+    def check_answer(b):
+        global score, attempts
+        attempts += 1
+        score += (b.description == correct_country)
+        feedback_label.value = f"{'✅ Correct!' if b.description == correct_country else f'❌ Incorrect! The correct answer was {correct_country}'} Score: {score}/{attempts}"
+        flag_quiz()
+
+    for btn in [widgets.Button(description=country) for country in options]:
+        btn.on_click(check_answer)
+        display(btn)
+    
+    global feedback_label
+    feedback_label = widgets.Label(value=f"Score: {score}/{attempts}")
+    display(feedback_label)
+
+flag_quiz()
